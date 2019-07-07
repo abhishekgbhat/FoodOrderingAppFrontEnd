@@ -82,13 +82,150 @@ class Details extends Component {
         xhrPosts.open("GET", this.props.baseUrl + "/restaurant/" + restaurant_id);
         xhrPosts.send();
     }
-    
+
+    handleClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        this.setState({ open: false });
+    };
+
     addButtonHandler = (item) => {
         // Add items into Cart .....
-       
+        this.addingItemIntoCart(item);
+        this.setState({
+            open: true,
+            successMessage: "Item added to cart!"
+        })
     }
 
-    
+    addingItemIntoCart = (item) => {
+        let itemList = this.state.addedItemsLists.slice();
+        var found = false;
+        for (let itemObj of this.state.addedItemsLists) {
+            if (itemObj.id === item.id) {
+                found = true;
+                break;
+            }
+        }
+        if (found === false) {
+            var item_detail = {};
+            item_detail.id = item.id;
+            item_detail.item_name = item.item_name;
+            item_detail.price = item.price;
+            item_detail.item_type = item.item_type;
+            item_detail.quantity = 1;
+            itemList.push(item_detail);
+        }
+        else {
+            for (let itemObj of this.state.addedItemsLists) {
+                let itemNode = itemObj;
+                if (itemObj.id === item.id) {
+                    itemNode.quantity = itemNode.quantity + 1;
+                    var foundIndex = itemList.findIndex(x => x.id === item.id);
+                    itemList[foundIndex] = itemNode;
+                }
+            }
+        }
+        // Calculate Quantity and Total Price...
+        var totalQuantity = 0;
+        var totalAmount = 0
+        for (let object of itemList) {
+            totalQuantity += object.quantity;
+            totalAmount += object.quantity * object.price;
+        }
+
+        this.setState({
+            addedItemsLists: itemList,
+            totalNumberOfItems: totalQuantity,
+            totalPrice: totalAmount
+        })
+    }
+    incrementQuantityHandler = (item) => {
+        console.log("increment by 1");
+        this.addingItemIntoCart(item);
+        this.setState({
+            open: true,
+            successMessage: "Item quantity increased by 1!"
+        })
+    }
+    decrementQuantityHandler = (item) => {
+        console.log("decrement by 1");
+        // Item removed from cart! when Quantity become 0
+
+        // Item quantity decreased by 1! when Quantity >=1
+        let itemList = this.state.addedItemsLists.slice();
+        let isItemRemoved = false
+        for (let itemObj of this.state.addedItemsLists) {
+            let itemNode = itemObj;
+            if (itemObj.id === item.id) {
+                if (itemNode.quantity > 1) {
+                    itemNode.quantity = itemNode.quantity - 1;
+                    let foundIndex = itemList.findIndex(x => x.id === item.id);
+                    itemList[foundIndex] = itemNode;
+                }
+                else {
+                    let foundIndex = itemList.findIndex(x => x.id === item.id);
+                    if (foundIndex > -1) {
+                        itemList.splice(foundIndex, 1);
+                    }
+                    isItemRemoved = true;
+                }
+            }
+        }
+
+        var totalQuantity = 0;
+        var totalAmount = 0
+        for (let object of itemList) {
+            totalQuantity += object.quantity;
+            totalAmount += object.quantity * object.price;
+        }
+
+        var message = "Item quantity decreased by 1!";
+        if (isItemRemoved === true) {
+            message = "Item removed from cart!";
+        }
+
+        this.setState({
+            open: true,
+            successMessage: message,
+            addedItemsLists: itemList,
+            totalNumberOfItems: totalQuantity,
+            totalPrice: totalAmount
+        })
+    }
+
+    checkoutButtonHandler = () => {
+        // if item is empty 
+
+        console.log(this.state.addedItemsLists)
+        if (this.state.addedItemsLists.length === 0) {
+            this.setState({
+                open: true,
+                successMessage: "Please add an item to your cart!"
+            })
+        } else {
+            // Check for Customer logged in or not ....
+            var token = sessionStorage.getItem('access-token');
+            console.log(token)
+            if (Utils.isUndefinedOrNullOrEmpty(token)) {
+                this.setState({
+                    open: true,
+                    successMessage: "Please login first!"
+                })
+            }
+            else {
+                console.log("Go to checkout page")
+                this.props.history.push({
+                    pathname: "/checkout",
+                    restaurant_id: this.props.match.params.id,
+                    restaurant_name: this.state.restaurantDetail.restaurant_name,
+                    itemList: this.state.addedItemsLists,
+                    totalAmount: this.state.totalPrice
+                })
+            }
+        }
+    }
 
     render() {
         const { classes } = this.props;
@@ -189,7 +326,74 @@ class Details extends Component {
                             ))
                         }
                     </div>
+                    <div className="cart-container">
+                        <Card className={classes.card}>
+                            <CardContent>
+                                <div>
+                                    <Badge
+                                        badgeContent={this.state.totalNumberOfItems}
+                                        color="primary"
+                                        invisible={false}>
+                                        <ShoppingCart />
+                                    </Badge>
+                                    <span className="my-cart"> My Cart</span>
+                                </div>
+                                {
+                                    this.state.addedItemsLists.map(item => (
+                                        <div className="item-list" key={"item" + item.id}>
+                                            {
+                                                item.item_type === "NON_VEG" &&
+                                                <FontAwesomeIcon icon={faStopCircle} className="non-veg" />
+                                            }
+                                            {
+                                                item.item_type === "VEG" &&
+                                                <FontAwesomeIcon icon={faStopCircle} className="veg" />
+                                            }
+                                            <span className="added-item-name"> {item.item_name} </span>
+                                            <button className="button-size" onClick={this.decrementQuantityHandler.bind(this, item)}> - </button>
+                                            <span className="quantity-label"> {item.quantity} </span>
+                                            <button className="button-size" onClick={this.incrementQuantityHandler.bind(this, item)}> + </button>
+                                            <span className="price-label"> {'\u20B9' + parseFloat(Math.round(item.price * item.quantity * 100) / 100).toFixed(2)} </span>
+                                        </div>
+                                    ))
+                                }
+                                <div className="total-amount-section">
+                                    <span> TOTAL AMOUNT </span>
+                                    <span className="total-amount"> {'\u20B9' + parseFloat(Math.round(this.state.totalPrice * 100) / 100).toFixed(2)} </span>
+                                </div>
+                            </CardContent>
+                            <CardActions>
+                                <Button variant="contained" color="primary" className={classes.button} onClick={this.checkoutButtonHandler}>
+                                    CHECKOUT
+                                </Button>
+                            </CardActions>
+                        </Card>
+                    </div>
                 </div>
+                <Snackbar
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                    }}
+                    open={this.state.open}
+                    onClose={this.handleClose}
+                    autoHideDuration={6000}
+                    ContentProps={{
+                        'aria-describedby': 'message-id'
+                    }}
+                    message={<span id="message-id"> {this.state.successMessage}</span>}
+                    action={[
+                        <IconButton
+                            key="close"
+                            aria-label="Close"
+                            color="inherit"
+                            className={classes.close}
+                            onClick={this.handleClose}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    ]}
+                />
             </div>
         );
     }
