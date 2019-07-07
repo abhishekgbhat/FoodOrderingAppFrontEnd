@@ -1,101 +1,129 @@
 import React, { Component } from 'react';
-import * as Utils from "../../common/Util";
-import Header from '../../common/header/Header';
 import './Details.css';
-
-import Button from '@material-ui/core/Button';
-import { SvgIcon, withStyles } from '@material-ui/core';
-import AccountCircle from '@material-ui/icons/AccountCircle';
-import Fastfood from '@material-ui/icons/Fastfood';
-import Search from '@material-ui/icons/Search';
-import Input from '@material-ui/core/Input';
-import InputAdornment from '@material-ui/core/InputAdornment';
 import PropTypes from 'prop-types';
-import Modal from 'react-modal';
-import Tabs from '@material-ui/core/Tabs';
-import Tab from '@material-ui/core/Tab';
-import Typography from '@material-ui/core/Typography';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import Snackbar from '@material-ui/core/Snackbar';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem'; 
-import GridList from '@material-ui/core/GridList';
-import GridListTile from '@material-ui/core/GridListTile';
-import GridListTileBar from '@material-ui/core/GridListTileBar';
-import StarBorderIcon from '@material-ui/icons/StarBorder';
+import { withStyles } from '@material-ui/core/styles';
+import Header from '../../common/header/Header';
+import Star from '@material-ui/icons/Star';
+
+
+
+const styles = {
+    star: {
+        color: 'black',
+    }
+
+};
 
 class Details extends Component {
 
-    constructor(props) {
-
-        super(props);
-
+    constructor() {
+        super();
         this.state = {
-            restaurant: {
-                restaurant_name: "",
-                photo_URL: "",
-                customer_rating: "",
-                
-            },
-            /**posts: 0,
-            follows: 0,
-            followed_by: 0,
-            access_token: sessionStorage.getItem('access-token'),
-            //accessToken: '8661035776.d0fcd39.39f63ab2f88d4f9c92b0862729ee2784',
-            editOpen: false,
-            fullNameRequired: 'dispNone',
-            newFullName: '',
-            mediaData: null,
-            currentItem: null,
-            likeSet: new Set(),
-            comments: {}, **/
-            imageModalOpen: false
+            restaurantDetail: {},
+            locality: "",
+            categoriesList: [],
+            open: false,
+            successMessage: "",
+            totalNumberOfItems: 0,
+            totalPrice: 0,
+            addedItemsLists: []
         }
     }
 
-    componentWillMount() {
-        let that = this;
-        let id = "246165d2-a238-11e8-9077-720006ceb890";
-        let baseUrl = "http://localhost:8080/api";
-        let dataRestaurant = null;
-        let xhrRestaurant = new XMLHttpRequest();
-        xhrRestaurant.addEventListener("readystatechange", function () {
+    componentWillMount = () => {
+
+        this.callApiToGetResturantDetail()
+    }
+
+    callApiToGetResturantDetail = () => {
+        let restaurant_id = this.props.match.params.id;
+        console.log(this.props.categories);
+        let xhrPosts = new XMLHttpRequest();
+        let that = this
+
+        xhrPosts.addEventListener("readystatechange", function () {
             if (this.readyState === 4) {
+                let data = JSON.parse(this.responseText);
                 that.setState({
-                    restaurant: JSON.parse(this.responseText)
+                    restaurantDetail: data,
+                    locality: data.address.locality,
+                    categoriesList: data.categories
                 });
             }
         });
 
-        //xhrRestaurant.open("GET", this.props.baseUrl + "restaurant/" + this.props.match.params.id);
-        xhrRestaurant.open("GET", baseUrl + "/restaurant/" + id);
-        xhrRestaurant.setRequestHeader("Accept", "application/json;charset=UTF-8");
-        xhrRestaurant.send(dataRestaurant);
+        xhrPosts.open("GET", this.props.baseUrl + "/restaurant/" + restaurant_id);
+        xhrPosts.send();
     }
 
+
     render() {
-        let restaurant = this.state.restaurant;
+        const { classes } = this.props;
 
         return (
-            <div className="details">
-                <Header />
-                <div className="restaurant-information">
-                    <div className="leftDetails">
-                        <img style={{ height: '100%', width: '100%', padding: '20px'}} src={restaurant.photo_URL} alt={restaurant.restaurant_name} />
-                    </div>
-                    <span style={{ marginLeft: "20px", padding: '40px' }}>
-                        <div style={{ width: "600px", fontSize: "big" }}> {restaurant.restaurant_name} <br /> <br />
-                            <div style={{ float: "left", width: "200px", fontSize: "small" }}> {restaurant.average_price} </div>
-                             
+            <div>
+                <Header
+                    history={this.props.history}
+                    showSearchArea={false} />
+                <div className="restaurant-main-container">
+                    <div className="restaurant-details-container">
+                        <div className="image-container">
+                            <img
+                                className="restaurant-image"
+                                src={this.state.restaurantDetail.photo_URL}
+                                alt=""
+                            />
                         </div>
-                        
-                    </span>
+                        <div className="information-container">
+                            <div className="restaurant-name-container">
+                                <div className="restaurant-name">
+                                    {this.state.restaurantDetail.restaurant_name}
+                                </div>
+                            </div>
+                            <div className="restaurant-locality-container">
+                                <div className="restaurant-locality">
+                                    {this.state.locality}
+                                </div>
+                            </div>
+
+                            <div className="restaurant-categories-container">
+                                <div className="restaurant-categories">
+                                    {this.props.categories}
+                                </div>
+                            </div>
+                            <div className="count-container">
+                                <div className="data-container">
+                                    <div className="rating-details-container">
+                                        <div className="rating-details">
+                                            <Star className={classes.star} />
+                                            <div className="rating-rr">{this.state.restaurantDetail.customer_rating}</div>
+                                        </div>
+                                        <div className="avg-rating">
+                                            AVERAGE RATING BY  <span className="customer-rating">{this.state.restaurantDetail.number_customers_rated}</span>  CUSTOMERS
+                                    </div>
+                                    </div>
+                                </div>
+                                <div className="data-container">
+                                    <div className="rating-details-container">
+                                        <div className="rating-details">
+                                            {'\u20B9' + this.state.restaurantDetail.average_price}
+                                        </div>
+                                        <div className="avg-rating">
+                                            AVERAGE COST PER TWO PERSON
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        )
+        );
     }
 }
 
-export default Details;
+Details.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
+
+export default withStyles(styles)(Details);
