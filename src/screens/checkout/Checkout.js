@@ -1,3 +1,15 @@
+import React, { Component } from 'react';
+import './Checkout.css';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/core/styles';
+import Header from '../../common/header/Header';
+import * as Utils from "../../common/Utils";
+import Stepper from '@material-ui/core/Stepper';
+import Step from '@material-ui/core/Step';
+import StepLabel from '@material-ui/core/StepLabel';
+import StepContent from '@material-ui/core/StepContent';
+import Button from '@material-ui/core/Button';
+import Typography from '@material-ui/core/Typography';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import AppBar from '@material-ui/core/AppBar';
@@ -20,15 +32,8 @@ const styles = {
     },
     formControl: {
         width: "28%"
-    },
-    select : {
-        marginTop: 20
-    }
-    ,menu : {
-        height: 200
     }
 }
-
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
@@ -69,11 +74,9 @@ class Checkout extends Component {
             cityRequired: "dispNone",
             stateRequired: "dispNone",
             pincodeRequired:"dispNone",
-            validPincode : ""
             validPincode : false
         }
     }
-
     componentWillMount() {
         /*
         restaurant_id: this.props.match.params.id,
@@ -128,13 +131,17 @@ class Checkout extends Component {
         let xhrPosts = new XMLHttpRequest();
         let that = this
         xhrPosts.addEventListener("readystatechange", function () {
+
             if (this.readyState === 4) {
                 console.log(this.responseText.addresses);
+                console.log(this.responseText);
+                console.log(this.status)
                 if (Utils.isUndefinedOrNullOrEmpty(this.responseText.addresses)) {
                     that.setState({
                         addressList: []
                     })
                 } else {
+
                 }
                 console.log(this.status)
                 if (this.status === 200) {
@@ -142,51 +149,62 @@ class Checkout extends Component {
                 }
                 else if (this.status === 401) {
                     //console.log(data.message)
+                    console.log(this.responseText);
+                    if (this.status === 200) {
+                        that.setState({
+                            addressList: this.responseText.addresses
+                        })
+                    }
                 }
             }
         });
         xhrPosts.open("GET", this.baseUrl + "/address/customer");
+        xhrPosts.open("GET", this.props.baseUrl + "/address/customer");
         xhrPosts.setRequestHeader('authorization', "Bearer " + sessionStorage.getItem('access-token'));
         xhrPosts.send();
     }
     callApiToSaveAddressOfCustomer = () => {
         let xhrPosts = new XMLHttpRequest();
         let that = this
-
         var obj = {};
-        obj.city = "";
-        obj.flat_building_name = "";
-        obj.locality = "";
-        obj.pincode = "";
-        obj.state_uuid = "";
         obj.city = this.state.city;
         obj.flat_building_name = this.state.flatBuildingNo;
         obj.locality = this.state.locality;
         obj.pincode = this.state.pincode;
+
         for (let stateObj of this.state.stateList){
             if(stateObj.state_name === this.state.state){
                 obj.state_uuid = this.stateObj.id;
+                obj.state_uuid = stateObj.id;
                 break;
             }
         }
 
+        console.log(JSON.stringify(obj))
         xhrPosts.addEventListener("readystatechange", function () {
 
             if (this.readyState === 4) {
                 console.log(this.responseText.addresses);
+                console.log(this.responseText);
                 console.log(this.status)
                 if (this.status === 200) {
                     //console.log("success")
                 }
                 else if (this.status === 401) {
                     //console.log(data.message)
+                if (this.status === 201) {
+                    that.callApiToGetAddressListOfCustomer();
                 }
             }
         });
         xhrPosts.open("POST", this.baseUrl + "/address");
+        xhrPosts.open("POST", this.props.baseUrl + "/address");
+        xhrPosts.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
         xhrPosts.setRequestHeader('authorization', "Bearer " + sessionStorage.getItem('access-token'));
         xhrPosts.send(obj);
+        xhrPosts.send(JSON.stringify(obj));
     }
+
     getSteps() {
         return ['Delivery', 'Payment'];
     }
@@ -238,21 +256,18 @@ class Checkout extends Component {
             pincode: e.target.value
         })
     }
-
     saveAddressHandler = () => {
         console.log("Save Address Clicked")
         this.state.flatBuildingNo === "" ? this.setState({ flatBuildingNoRequired: "dispBlock" }) : this.setState({ flatBuildingNoRequired: "dispNone" })
         this.state.locality === "" ? this.setState({ localityRequired: "dispBlock" }) : this.setState({ localityRequired: "dispNone" })
         this.state.state === "" ? this.setState({ stateRequired: "dispBlock" }) : this.setState({ stateRequired: "dispNone" })
         this.state.city === "" ? this.setState({ cityRequired: "dispBlock" }) : this.setState({ cityRequired: "dispNone" })
-
         let validPincodeNumber = this.pincodeValidation()
         if (validPincodeNumber === true && this.state.flatBuildingNo !== ""  &&
              this.state.locality !== "" && this.state.state !== "" && this.state.city !== "") {
                 this.callApiToSaveAddressOfCustomer()
         }
     }
-
     pincodeValidation = () => {
         let isValidPincode = false;
         if (this.state.pincode === "") {
@@ -338,7 +353,6 @@ class Checkout extends Component {
                                                             </FormControl> <br /> <br />
                                                             <FormControl required className={classes.formControl}>
                                                                 <InputLabel htmlFor="state"> State</InputLabel>
-                                                                <Select className={classes.select}
                                                                 <Select 
                                                                      open={this.state.open}
                                                                      onClose={this.handleClose}
@@ -365,12 +379,51 @@ class Checkout extends Component {
                                                                 <InputLabel htmlFor="pincode"> Pincode </InputLabel>
                                                                 <Input id="pincode" type="text" pincode={this.state.pincode} onChange={this.inputPincodeChangeHandler} />
                                                                 <FormHelperText className={this.state.pincodeRequired}>
-                                                                     <span className="red">required</span>
                                                                     {this.state.validPincode === true && <span className="red">required</span>}
                                                                     {this.state.validPincode === false && <span className="red">Pincode must contain only numbers and must be 6 digits long</span>}
                                                                 </FormHelperText>
                                                             </FormControl> <br /> <br />
-
+                
                                                             <Button variant="contained" color="secondary" onClick={this.saveAddressHandler} className={classes.loginButton}> SAVE ADDRESS
                                                             </Button>
                                                         </TabContainer>
+                                                    }
+                                                </div>
+                                            }
+                                            <div className={classes.actionsContainer}>
+                                                <div>
+                                                    <Button
+                                                        disabled={activeStep === 0}
+                                                        onClick={this.handleBack}
+                                                        className={classes.button}
+                                                    >
+                                                        Back
+                                                    </Button>
+                                                    <Button
+                                                        variant="contained"
+                                                        color="primary"
+                                                        onClick={this.handleNext}
+                                                        className={classes.button}
+                                                    >
+                                                        {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </StepContent>
+                                    </Step>
+                                ))}
+                            </Stepper>
+                        </div>
+                    </div>
+                    <div className="summary-container">
+                        Summary Page
+                    </div>
+                </div>
+            </div>
+        )
+    }
+}
+Checkout.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
+export default withStyles(styles)(Checkout);
