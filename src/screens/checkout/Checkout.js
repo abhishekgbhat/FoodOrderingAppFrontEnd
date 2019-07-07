@@ -1,15 +1,3 @@
-import React, { Component } from 'react';
-import './Checkout.css';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import Header from '../../common/header/Header';
-import * as Utils from "../../common/Utils";
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import StepContent from '@material-ui/core/StepContent';
-import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import AppBar from '@material-ui/core/AppBar';
@@ -19,13 +7,11 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import Input from '@material-ui/core/Input';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
-
 const styles = {
     root: {
         width: '98%'
     },
     button: {
-        marginTop: 50,
         marginTop: 30,
         marginRight: 20,
     },
@@ -53,10 +39,8 @@ const MenuProps = {
     },
   },
 };
-
 const TabContainer = function (props) {
     return (
-        <Typography component="div" style={{ padding: 8 * 2}}>
         <Typography component="div" style={{ padding: 8 * 2 }}>
             {props.children}
         </Typography>
@@ -74,7 +58,6 @@ class Checkout extends Component {
             stateList: [],
             addressList: [],
             activeStep: 0,
-            value: 0
             value: 0,
             flatBuildingNo: "",
             locality: "",
@@ -87,6 +70,7 @@ class Checkout extends Component {
             stateRequired: "dispNone",
             pincodeRequired:"dispNone",
             validPincode : ""
+            validPincode : false
         }
     }
 
@@ -148,11 +132,9 @@ class Checkout extends Component {
                 console.log(this.responseText.addresses);
                 if (Utils.isUndefinedOrNullOrEmpty(this.responseText.addresses)) {
                     that.setState({
-                        addressList : []
                         addressList: []
                     })
                 } else {
-
                 }
                 console.log(this.status)
                 if (this.status === 200) {
@@ -170,13 +152,26 @@ class Checkout extends Component {
     callApiToSaveAddressOfCustomer = () => {
         let xhrPosts = new XMLHttpRequest();
         let that = this
+
         var obj = {};
         obj.city = "";
         obj.flat_building_name = "";
         obj.locality = "";
         obj.pincode = "";
         obj.state_uuid = "";
+        obj.city = this.state.city;
+        obj.flat_building_name = this.state.flatBuildingNo;
+        obj.locality = this.state.locality;
+        obj.pincode = this.state.pincode;
+        for (let stateObj of this.state.stateList){
+            if(stateObj.state_name === this.state.state){
+                obj.state_uuid = this.stateObj.id;
+                break;
+            }
+        }
+
         xhrPosts.addEventListener("readystatechange", function () {
+
             if (this.readyState === 4) {
                 console.log(this.responseText.addresses);
                 console.log(this.status)
@@ -210,10 +205,8 @@ class Checkout extends Component {
             activeStep: 0,
         });
     }
-
     handleChange = (event, value) => {
         this.setState({ value });
-    };
     }
     handleClose = () => {
         this.setState({ open: false });
@@ -221,24 +214,7 @@ class Checkout extends Component {
     handleOpen = () => {
         this.setState({ open: true });
     }
-
-    getStepContent(step) {
-        switch (step) {
-          case 0:
-            return `For each ad campaign that you create, you can control how much
-                    you're willing to spend on clicks and conversions, which networks
-                    and geographical locations you want your ads to show on, and more.`;
-          case 1:
-            return 'An ad group contains one or more ads which target a shared set of keywords.';
-          case 2:
-            return `Try out different ad text to see what brings in the most customers,
-                    and learn how to enhance your ads using features like ad extensions.
-                    If you run into any problems with your ads, find out how to tell if
-                    they're running and how to resolve approval issues.`;
-          default:
-            return 'Unknown step';
-        }
-      }
+    
     inputFlatNumberChangeHandler = (e) => {
         this.setState({
             flatBuildingNo: e.target.value
@@ -265,8 +241,42 @@ class Checkout extends Component {
 
     saveAddressHandler = () => {
         console.log("Save Address Clicked")
+        this.state.flatBuildingNo === "" ? this.setState({ flatBuildingNoRequired: "dispBlock" }) : this.setState({ flatBuildingNoRequired: "dispNone" })
+        this.state.locality === "" ? this.setState({ localityRequired: "dispBlock" }) : this.setState({ localityRequired: "dispNone" })
+        this.state.state === "" ? this.setState({ stateRequired: "dispBlock" }) : this.setState({ stateRequired: "dispNone" })
+        this.state.city === "" ? this.setState({ cityRequired: "dispBlock" }) : this.setState({ cityRequired: "dispNone" })
+
+        let validPincodeNumber = this.pincodeValidation()
+        if (validPincodeNumber === true && this.state.flatBuildingNo !== ""  &&
+             this.state.locality !== "" && this.state.state !== "" && this.state.city !== "") {
+                this.callApiToSaveAddressOfCustomer()
+        }
     }
 
+    pincodeValidation = () => {
+        let isValidPincode = false;
+        if (this.state.pincode === "") {
+            this.setState({
+                pincodeRequired: "dispBlock",
+                validPincode: true
+            })
+        } else {
+            // Check for Valid mobile no ...
+            if (this.state.pincode.length === 6) {
+                isValidPincode = true
+                this.setState({
+                    validPincode: true,
+                    pincodeRequired: "dispNone"
+                })
+            } else {
+                this.setState({
+                    validPincode: false,
+                    pincodeRequired: "dispBlock"
+                })
+            }
+        }
+        return isValidPincode
+    }
     render() {
         const { classes } = this.props;
         const steps = this.getSteps();
@@ -285,20 +295,6 @@ class Checkout extends Component {
                                     <Step key={label}>
                                         <StepLabel>{label}</StepLabel>
                                         <StepContent>
-                                            {index === 0 && 
-                                               <div>
-                                                 <AppBar position="static">
-                                                   <Tabs value={value} onChange={this.handleChange}>
-                                                     <Tab label="Existing Address" />
-                                                     <Tab label="New Address" />
-                                                   </Tabs>
-                                                 </AppBar>
-                                                 { value === 0 && 
-                                                    <TabContainer>
-                                                        {
-                                                            this.state.addressList.length === 0 &&
-                                                            <Typography>
-                                                                There are no saved addresses! You can save an address using the 'New Address' tab or using your ‘Profile’ menu option.
                                             {index === 0 &&
                                                 <div>
                                                     <AppBar position="static">
@@ -314,16 +310,7 @@ class Checkout extends Component {
                                                                 <Typography>
                                                                     There are no saved addresses! You can save an address using the 'New Address' tab or using your ‘Profile’ menu option.
                                                             </Typography>
-                                                        }
-
-                                                    </TabContainer>
-                                                 }
-                                                 { value === 1 && 
-                                                    <TabContainer>New Address</TabContainer>
-                                                 }
-                                               </div>
                                                             }
-
                                                         </TabContainer>
                                                     }
                                                     {value === 1 &&
@@ -352,6 +339,7 @@ class Checkout extends Component {
                                                             <FormControl required className={classes.formControl}>
                                                                 <InputLabel htmlFor="state"> State</InputLabel>
                                                                 <Select className={classes.select}
+                                                                <Select 
                                                                      open={this.state.open}
                                                                      onClose={this.handleClose}
                                                                      onOpen={this.handleOpen}
@@ -378,13 +366,11 @@ class Checkout extends Component {
                                                                 <Input id="pincode" type="text" pincode={this.state.pincode} onChange={this.inputPincodeChangeHandler} />
                                                                 <FormHelperText className={this.state.pincodeRequired}>
                                                                      <span className="red">required</span>
+                                                                    {this.state.validPincode === true && <span className="red">required</span>}
+                                                                    {this.state.validPincode === false && <span className="red">Pincode must contain only numbers and must be 6 digits long</span>}
                                                                 </FormHelperText>
                                                             </FormControl> <br /> <br />
+
                                                             <Button variant="contained" color="secondary" onClick={this.saveAddressHandler} className={classes.loginButton}> SAVE ADDRESS
                                                             </Button>
                                                         </TabContainer>
-                                                    }
-                                                </div>
-                                            }
-                                            <div className={classes.actionsContainer}>
-                                                <div>
