@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
 import 'typeface-roboto';
-import App from "./screens/App";
+import Controller from "./screens/Controller";
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';  
 
 const theme = createMuiTheme({
@@ -21,7 +21,7 @@ const theme = createMuiTheme({
 
 ReactDOM.render(
      <MuiThemeProvider theme = { theme }>
-      <App />
+      <Controller />
     </MuiThemeProvider>,
     document.getElementById('root')
 );

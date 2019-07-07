@@ -3,7 +3,7 @@ import './Checkout.css';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Header from '../../common/header/Header';
-import * as Utils from "../../common/Utils";
+import * as Utils from "../../common/Util";
 import Stepper from '@material-ui/core/Stepper';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
