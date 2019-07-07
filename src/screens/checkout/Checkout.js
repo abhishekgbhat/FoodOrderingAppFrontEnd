@@ -31,7 +31,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Paper from '@material-ui/core/Paper';
 import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
-import Snackbar from '@material-ui/core/Snackbar';
+import Snackbar from '@material-ui/core/Snackbar'; 
 import CardActions from '@material-ui/core/CardActions';
 import Divider from '@material-ui/core/Divider';
 import {faStopCircle } from '@fortawesome/free-regular-svg-icons';
@@ -118,6 +118,15 @@ class Checkout extends Component {
             validPincode: false,
             addressId: '',
             selectedPayment: 'none',
+            successMessage:"",
+            itemList:[],
+            bill:"",
+            coupon_Id:"",
+            discout:"",
+            payment_id:"",
+            restaurant_id:""
+            
+                         
             
         }
     }
@@ -222,12 +231,14 @@ class Checkout extends Component {
         obj.locality = this.state.locality;
         obj.pincode = this.state.pincode;
 
-        for (let stateObj of this.state.stateList) {
-            if (stateObj.state_name === this.state.state) {
-                obj.state_uuid = stateObj.id;
-                break;
-            }
-        }
+        // for (let stateObj of this.state.stateList) {
+        //     if (stateObj.state_name === this.state.state) {
+        //         obj.state_uuid = stateObj.id;
+        //         break;
+        //     }
+        // }
+        obj.state_uuid = "246162a8-a238-11e8-9077-720006ceb890";
+
         console.log(JSON.stringify(obj))
         xhrPosts.addEventListener("readystatechange", function () {
 
@@ -242,6 +253,7 @@ class Checkout extends Component {
         xhrPosts.open("POST", this.props.baseUrl + "/address");
         xhrPosts.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
         xhrPosts.setRequestHeader('authorization', "Bearer " + sessionStorage.getItem('access-token'));
+        console.log("authorization " + sessionStorage.getItem('access-token'));
         xhrPosts.send(JSON.stringify(obj));
     }
 
@@ -308,12 +320,15 @@ class Checkout extends Component {
         console.log("Save Address Clicked")
         this.state.flatBuildingNo === "" ? this.setState({ flatBuildingNoRequired: "dispBlock" }) : this.setState({ flatBuildingNoRequired: "dispNone" })
         this.state.locality === "" ? this.setState({ localityRequired: "dispBlock" }) : this.setState({ localityRequired: "dispNone" })
-        this.state.state === "" ? this.setState({ stateRequired: "dispBlock" }) : this.setState({ stateRequired: "dispNone" })
+        /*this.state.state === "" ? this.setState({ stateRequired: "dispBlock" }) : this.setState({ stateRequired: "dispNone" }) */
+        this.state.state="Gujarat"
+        this.state.locality="Satellite"
         this.state.city === "" ? this.setState({ cityRequired: "dispBlock" }) : this.setState({ cityRequired: "dispNone" })
 
         let validPincodeNumber = this.pincodeValidation()
         if (validPincodeNumber === true && this.state.flatBuildingNo !== "" &&
             this.state.locality !== "" && this.state.state !== "" && this.state.city !== "") {
+            console.log("Save address function called")
             this.callApiToSaveAddressOfCustomer()
         }
     }
@@ -353,8 +368,44 @@ class Checkout extends Component {
 
     // Set Payment 
     placeOrderHandler = () => {
-        console.log('place order')
+        console.log('order handler')
+        //object create
+        let xhrGet = new XMLHttpRequest();
+
+        var obj = {};
+        obj.addressId = this.state.addressId;
+        obj.bill = this.state.bill;
+        obj.coupon_Id = this.state.coupon_Id;
+        obj.discout = this.state.discout;
+
+        obj.payment_id = this.state.payment_id;
+        obj.restaurant_id = this.state.restaurant_id;
+        
+        console.log("test "+ JSON.stringify(obj))
+
+        
+        xhrGet.addEventListener("readystatechange", function () {
+            if (this.readyState === 4) {
+                console.log(this.responseText);
+                console.log(this.status);
+                 that.setState({
+                     successMessage: "Order placed successfully!"
+                });
+            }else{
+                 that.setState({
+                     successMessage: " Unable to place your order!"
+                });
+               
+            }
+        });
+
+        //call get method
+        xhrGet.open("POST", this.props.baseUrl + "/order");
+        xhrGet.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        xhrGet.setRequestHeader('authorization', "Bearer " + sessionStorage.getItem('access-token'));
+        xhrGet.send(JSON.stringify(obj));
     }
+
     checkPaymentHandler = (event) => {
         console.log(event.target.value)
         this.setState({ selectedPayment: event.target.value });
@@ -453,7 +504,7 @@ class Checkout extends Component {
                                                             </FormControl> <br /> <br />
                                                             <FormControl required className={classes.formControl}>
                                                                 <InputLabel htmlFor="state"> State</InputLabel>
-                                                                <Select
+                                                               {/*  <Select
                                                                     open={this.state.open}
                                                                     onClose={this.handleClose}
                                                                     onOpen={this.handleOpen}
@@ -470,7 +521,7 @@ class Checkout extends Component {
                                                                             {state.state_name}
                                                                         </MenuItem>
                                                                     ))}
-                                                                </Select>
+                                                                </Select> */}
                                                                 <FormHelperText className={this.state.stateRequired}>
                                                                     <span className="red">required</span>
                                                                 </FormHelperText>
@@ -579,11 +630,24 @@ class Checkout extends Component {
                                 </div>
                            </CardContent>
                            <CardActions>
-                                <Button variant="contained" color="primary" className={classes.button1} onClick={this.placeOrderHandler}>
+                                <Button variant="contained" color="primary" className={classes.button1} onClick={this.placeOrderHandler}> 
                                     PLACE ORDER
                                 </Button>
                              </CardActions>
                          </Card>
+                         <Snackbar
+                    anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'left',
+                    }}
+                    open={this.state.open}
+                    onClose={this.handleClose}
+                    autoHideDuration={6000}
+                    ContentProps={{
+                        'aria-describedby': 'message-id'
+                    }}
+                    message={<span id="message-id"> {this.state.successMessage}</span>}
+                />
                     </div>
                 </div>
             </div>
