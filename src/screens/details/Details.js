@@ -4,14 +4,41 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Header from '../../common/header/Header';
 import Star from '@material-ui/icons/Star';
-
+import Divider from '@material-ui/core/Divider';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircle } from '@fortawesome/free-solid-svg-icons';
+import IconButton from '@material-ui/core/IconButton';
+import Add from '@material-ui/icons/Add';
+import Card from "@material-ui/core/Card";
+import ShoppingCart from '@material-ui/icons/ShoppingCart';
+import Snackbar from '@material-ui/core/Snackbar';
+import CloseIcon from '@material-ui/icons/Close';
+import { CardContent } from '@material-ui/core';
+import CardActions from '@material-ui/core/CardActions';
+import Button from '@material-ui/core/Button';
+import Badge from '@material-ui/core/Badge';
+import * as Utils from "../../common/Util";
+import { faStopCircle } from '@fortawesome/free-regular-svg-icons';
 
 
 const styles = {
     star: {
         color: 'black',
+    },
+    icon: {
+        margin: 10
+    },
+    card: {
+        width: '90%',
+        padding: 10,
+        height: 'auto'
+    },
+    button: {
+        width: '100%'
+    },
+    button1: {
+        width: '10%'
     }
-
 };
 
 class Details extends Component {
@@ -39,7 +66,7 @@ class Details extends Component {
         let restaurant_id = this.props.match.params.id;
         console.log(this.props.categories);
         let xhrPosts = new XMLHttpRequest();
-        let that = this
+        let that = this;
 
         xhrPosts.addEventListener("readystatechange", function () {
             if (this.readyState === 4) {
@@ -55,7 +82,13 @@ class Details extends Component {
         xhrPosts.open("GET", this.props.baseUrl + "/restaurant/" + restaurant_id);
         xhrPosts.send();
     }
+    
+    addButtonHandler = (item) => {
+        // Add items into Cart .....
+       
+    }
 
+    
 
     render() {
         const { classes } = this.props;
@@ -109,12 +142,52 @@ class Details extends Component {
                                             {'\u20B9' + this.state.restaurantDetail.average_price}
                                         </div>
                                         <div className="avg-rating">
-                                            AVERAGE COST PER TWO PERSON
+                                            AVERAGE COST FOR TWO PEOPLE
                                     </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div className="menu-cart-container">
+                    <div className="menu-items-container">
+                        {
+                            this.state.categoriesList.map(category => (
+                                <div key={"category-" + category.id}>
+                                    <div className="category-name-container">
+                                        {category.category_name}
+                                    </div>
+                                    <div className="divider-line">
+                                        <Divider variant='fullWidth' />
+                                    </div>
+                                    {category.item_list.map(item => (
+                                        <div className="item-container" key={"item-" + item.id}>
+                                            <div className="item-info">
+                                                {
+                                                    item.item_type === "NON_VEG" &&
+                                                    <FontAwesomeIcon icon={faCircle} className="non-veg" />
+                                                }
+                                                {
+                                                    item.item_type === "VEG" &&
+                                                    <FontAwesomeIcon icon={faCircle} className="veg" />
+                                                }
+                                                {item.item_name}
+                                            </div>
+                                            <div className="price-info">
+                                                <span className="spacing">
+                                                    {'\u20B9' + parseFloat(Math.round(item.price * 100) / 100).toFixed(2)}
+                                                </span>
+                                                <IconButton onClick={this.addButtonHandler.bind(this, item)}>
+                                                    <Add />
+                                                </IconButton>
+                                            </div>
+                                        </div>
+                                    ))
+                                    }
+                                </div>
+                            ))
+                        }
                     </div>
                 </div>
             </div>
