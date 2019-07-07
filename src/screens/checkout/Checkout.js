@@ -13,23 +13,51 @@ import Typography from '@material-ui/core/Typography';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import AppBar from '@material-ui/core/AppBar';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import Input from '@material-ui/core/Input';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 
 const styles = {
     root: {
-        width: '95%'
         width: '98%'
     },
     button: {
         marginTop: 50,
+        marginTop: 30,
         marginRight: 20,
     },
     actionsContainer: {
         marginBottom: 30,
+    },
+    formControl: {
+        width: "28%"
+    },
+    select : {
+        marginTop: 20
+    }
+    ,menu : {
+        height: 200
     }
 }
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
 const TabContainer = function (props) {
     return (
         <Typography component="div" style={{ padding: 8 * 2}}>
+        <Typography component="div" style={{ padding: 8 * 2 }}>
             {props.children}
         </Typography>
     );
@@ -47,8 +75,21 @@ class Checkout extends Component {
             addressList: [],
             activeStep: 0,
             value: 0
+            value: 0,
+            flatBuildingNo: "",
+            locality: "",
+            city: "",
+            state: "",
+            pincode: "",
+            flatBuildingNoRequired: "dispNone",
+            localityRequired: "dispNone",
+            cityRequired: "dispNone",
+            stateRequired: "dispNone",
+            pincodeRequired:"dispNone",
+            validPincode : ""
         }
     }
+
     componentWillMount() {
         /*
         restaurant_id: this.props.match.params.id,
@@ -106,9 +147,9 @@ class Checkout extends Component {
             if (this.readyState === 4) {
                 console.log(this.responseText.addresses);
                 if (Utils.isUndefinedOrNullOrEmpty(this.responseText.addresses)) {
-
                     that.setState({
                         addressList : []
+                        addressList: []
                     })
                 } else {
 
@@ -169,10 +210,18 @@ class Checkout extends Component {
             activeStep: 0,
         });
     }
+
     handleChange = (event, value) => {
         this.setState({ value });
     };
-    
+    }
+    handleClose = () => {
+        this.setState({ open: false });
+    }
+    handleOpen = () => {
+        this.setState({ open: true });
+    }
+
     getStepContent(step) {
         switch (step) {
           case 0:
@@ -190,6 +239,34 @@ class Checkout extends Component {
             return 'Unknown step';
         }
       }
+    inputFlatNumberChangeHandler = (e) => {
+        this.setState({
+            flatBuildingNo: e.target.value
+        })
+    }
+    inputLocalityChangeHandler = (e) => {
+        this.setState({
+            locality: e.target.value
+        })
+    }
+    inputCityChangeHandler = (e) => {
+        this.setState({
+            city: e.target.value
+        })
+    }
+    inputStateChangeHandler = (event) => {
+        this.setState({ [event.target.name]: event.target.value });
+    }
+    inputPincodeChangeHandler = (e) => {
+        this.setState({
+            pincode: e.target.value
+        })
+    }
+
+    saveAddressHandler = () => {
+        console.log("Save Address Clicked")
+    }
+
     render() {
         const { classes } = this.props;
         const steps = this.getSteps();
@@ -208,7 +285,6 @@ class Checkout extends Component {
                                     <Step key={label}>
                                         <StepLabel>{label}</StepLabel>
                                         <StepContent>
-                                            {index == 0 && 
                                             {index === 0 && 
                                                <div>
                                                  <AppBar position="static">
@@ -217,14 +293,26 @@ class Checkout extends Component {
                                                      <Tab label="New Address" />
                                                    </Tabs>
                                                  </AppBar>
-                                                 {value === 0 && <TabContainer>Existing Address</TabContainer>}
-                                                 {value === 1 && <TabContainer>New Address</TabContainer>}
                                                  { value === 0 && 
                                                     <TabContainer>
                                                         {
                                                             this.state.addressList.length === 0 &&
                                                             <Typography>
                                                                 There are no saved addresses! You can save an address using the 'New Address' tab or using your ‘Profile’ menu option.
+                                            {index === 0 &&
+                                                <div>
+                                                    <AppBar position="static">
+                                                        <Tabs value={value} onChange={this.handleChange}>
+                                                            <Tab label="Existing Address" />
+                                                            <Tab label="New Address" />
+                                                        </Tabs>
+                                                    </AppBar>
+                                                    {value === 0 &&
+                                                        <TabContainer>
+                                                            {
+                                                                this.state.addressList.length === 0 &&
+                                                                <Typography>
+                                                                    There are no saved addresses! You can save an address using the 'New Address' tab or using your ‘Profile’ menu option.
                                                             </Typography>
                                                         }
 
@@ -234,5 +322,69 @@ class Checkout extends Component {
                                                     <TabContainer>New Address</TabContainer>
                                                  }
                                                </div>
+                                                            }
+
+                                                        </TabContainer>
+                                                    }
+                                                    {value === 1 &&
+                                                        <TabContainer>
+                                                            <FormControl required className={classes.formControl}>
+                                                                <InputLabel htmlFor="flatnumber"> Flat / Building No.</InputLabel>
+                                                                <Input id="flatnumber" type="text" flatnumber={this.state.flatBuildingNo} onChange={this.inputFlatNumberChangeHandler} />
+                                                                <FormHelperText className={this.state.flatBuildingNoRequired}>
+                                                                    <span className="red">required</span>
+                                                                </FormHelperText>
+                                                            </FormControl> <br /> <br />
+                                                            <FormControl className={classes.formControl}>
+                                                                <InputLabel htmlFor="locality"> Locality </InputLabel>
+                                                                <Input id="locality" type="text" locality={this.state.locality} onChange={this.inputLocalityChangeHandler} />
+                                                                <FormHelperText className={this.state.localityRequired}>
+                                                                    <span className="red">required</span>
+                                                                </FormHelperText>
+                                                            </FormControl> <br /> <br />
+                                                            <FormControl required className={classes.formControl}>
+                                                                <InputLabel htmlFor="city"> City </InputLabel>
+                                                                <Input id="city" type="text" city={this.state.city} onChange={this.inputCityChangeHandler} />
+                                                                <FormHelperText className={this.state.cityRequired}>
+                                                                        <span className="red">required</span>
+                                                                </FormHelperText>
+                                                            </FormControl> <br /> <br />
+                                                            <FormControl required className={classes.formControl}>
+                                                                <InputLabel htmlFor="state"> State</InputLabel>
+                                                                <Select className={classes.select}
+                                                                     open={this.state.open}
+                                                                     onClose={this.handleClose}
+                                                                     onOpen={this.handleOpen}
+                                                                     value={this.state.state}
+                                                                     onChange={this.inputStateChangeHandler}
+                                                                     inputProps={{
+                                                                        name: 'state',
+                                                                        id: 'demo-controlled-open-select',
+                                                                      }}
+                                                                      MenuProps={MenuProps}
+                                                                 >
+                                                                    {this.state.stateList.map(state => (
+                                                                        <MenuItem key={state.id} value={state.state_name}>
+                                                                          {state.state_name}
+                                                                        </MenuItem>
+                                                                     ))}
+                                                               </Select>
+                                                                <FormHelperText className={this.state.stateRequired}>
+                                                                     <span className="red">required</span>
+                                                                </FormHelperText>
+                                                            </FormControl> <br /> <br />
+                                                            <FormControl required className={classes.formControl}>
+                                                                <InputLabel htmlFor="pincode"> Pincode </InputLabel>
+                                                                <Input id="pincode" type="text" pincode={this.state.pincode} onChange={this.inputPincodeChangeHandler} />
+                                                                <FormHelperText className={this.state.pincodeRequired}>
+                                                                     <span className="red">required</span>
+                                                                </FormHelperText>
+                                                            </FormControl> <br /> <br />
+                                                            <Button variant="contained" color="secondary" onClick={this.saveAddressHandler} className={classes.loginButton}> SAVE ADDRESS
+                                                            </Button>
+                                                        </TabContainer>
+                                                    }
+                                                </div>
                                             }
                                             <div className={classes.actionsContainer}>
+                                                <div>
