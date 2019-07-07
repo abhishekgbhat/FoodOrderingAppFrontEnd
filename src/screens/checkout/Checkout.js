@@ -14,10 +14,10 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import AppBar from '@material-ui/core/AppBar';
 
-const styles = {}
 const styles = {
     root: {
         width: '95%'
+        width: '98%'
     },
     button: {
         marginTop: 50,
@@ -27,7 +27,6 @@ const styles = {
         marginBottom: 30,
     }
 }
-
 const TabContainer = function (props) {
     return (
         <Typography component="div" style={{ padding: 8 * 2}}>
@@ -35,33 +34,21 @@ const TabContainer = function (props) {
         </Typography>
     );
 }
-
 TabContainer.propTypes = {
     children: PropTypes.node.isRequired
 }
-
 class Checkout extends Component {
-
-    constructor(){
-        super()
-        this.state={
-            open : false,
     constructor() {
         super();
         this.state = {
             open: false,
             paymentMethods: [],
-            stateList : [],
-            addressList : []
             stateList: [],
             addressList: [],
             activeStep: 0,
             value: 0
         }
     }
-
-    componentWillMount(){
-
     componentWillMount() {
         /*
         restaurant_id: this.props.match.params.id,
@@ -69,26 +56,16 @@ class Checkout extends Component {
                     totalAmount : this.state.totalPrice
                     */
         if (Utils.isUndefinedOrNullOrEmpty(this.props.location.restaurant_id)) {
-                this.props.history.push({
-                  pathname: "/"
-                });
             this.props.history.push({
                 pathname: "/"
             });
         } else {
-               console.log(" Call Api to get Payment and state and addresses")
-               this.callApiToGetStateList();
-               this.callApiToGetPaymentMethods();
-               this.callApiToGetAddressListOfCustomer()
-            
             console.log(" Call Api to get Payment and state and addresses")
             this.callApiToGetStateList();
             this.callApiToGetPaymentMethods();
             this.callApiToGetAddressListOfCustomer()
-
         }
     }
-
     callApiToGetStateList = () => {
         console.log("get State api started")
         let xhrPosts = new XMLHttpRequest();
@@ -126,22 +103,21 @@ class Checkout extends Component {
         let xhrPosts = new XMLHttpRequest();
         let that = this
         xhrPosts.addEventListener("readystatechange", function () {
-
             if (this.readyState === 4) {
                 console.log(this.responseText.addresses);
-                if(Utils.isUndefinedOrNullOrEmpty(this.responseText.addresses)){
                 if (Utils.isUndefinedOrNullOrEmpty(this.responseText.addresses)) {
 
+                    that.setState({
+                        addressList : []
+                    })
                 } else {
 
                 }
                 console.log(this.status)
                 if (this.status === 200) {
-                  console.log("success")
                     console.log("success")
                 }
                 else if (this.status === 401) {
-                   //console.log(data.message)
                     //console.log(data.message)
                 }
             }
@@ -164,11 +140,9 @@ class Checkout extends Component {
                 console.log(this.responseText.addresses);
                 console.log(this.status)
                 if (this.status === 200) {
-                  //console.log("success")
                     //console.log("success")
                 }
                 else if (this.status === 401) {
-                   //console.log(data.message)
                     //console.log(data.message)
                 }
             }
@@ -177,33 +151,28 @@ class Checkout extends Component {
         xhrPosts.setRequestHeader('authorization', "Bearer " + sessionStorage.getItem('access-token'));
         xhrPosts.send(obj);
     }
-
     getSteps() {
         return ['Delivery', 'Payment'];
     }
-
     handleNext = () => {
         this.setState(state => ({
             activeStep: state.activeStep + 1,
         }));
     }
-
     handleBack = () => {
         this.setState(state => ({
             activeStep: state.activeStep - 1,
         }));
     }
-
     handleReset = () => {
         this.setState({
             activeStep: 0,
         });
     }
-
     handleChange = (event, value) => {
         this.setState({ value });
     };
-
+    
     getStepContent(step) {
         switch (step) {
           case 0:
@@ -222,19 +191,15 @@ class Checkout extends Component {
         }
       }
     render() {
-        return(
         const { classes } = this.props;
         const steps = this.getSteps();
         const { activeStep } = this.state;
         const { value } = this.state;
-
         return (
             <div>
-                 <Header
                 <Header
                     history={this.props.history}
                     showSearchArea={false} />
-                    Checkout page
                 <div className="checkout-main-container">
                     <div className="checkout-container">
                         <div className={classes.root}>
@@ -244,6 +209,7 @@ class Checkout extends Component {
                                         <StepLabel>{label}</StepLabel>
                                         <StepContent>
                                             {index == 0 && 
+                                            {index === 0 && 
                                                <div>
                                                  <AppBar position="static">
                                                    <Tabs value={value} onChange={this.handleChange}>
@@ -253,37 +219,20 @@ class Checkout extends Component {
                                                  </AppBar>
                                                  {value === 0 && <TabContainer>Existing Address</TabContainer>}
                                                  {value === 1 && <TabContainer>New Address</TabContainer>}
+                                                 { value === 0 && 
+                                                    <TabContainer>
+                                                        {
+                                                            this.state.addressList.length === 0 &&
+                                                            <Typography>
+                                                                There are no saved addresses! You can save an address using the 'New Address' tab or using your ‘Profile’ menu option.
+                                                            </Typography>
+                                                        }
+
+                                                    </TabContainer>
+                                                 }
+                                                 { value === 1 && 
+                                                    <TabContainer>New Address</TabContainer>
+                                                 }
                                                </div>
                                             }
                                             <div className={classes.actionsContainer}>
-                                                <div>
-                                                    <Button
-                                                        disabled={activeStep === 0}
-                                                        onClick={this.handleBack}
-                                                        className={classes.button}
-                                                    >
-                                                        Back
-                                                    </Button>
-                                                    <Button
-                                                        variant="contained"
-                                                        color="primary"
-                                                        onClick={this.handleNext}
-                                                        className={classes.button}
-                                                    >
-                                                        {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </StepContent>
-                                    </Step>
-                                ))}
-                            </Stepper>
-                        </div>
-                    </div>
-                    <div className="summary-container">
-                        Summary Page
-                    </div>
-                </div>
-            </div>
-        )
-    }
