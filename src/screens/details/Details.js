@@ -258,7 +258,7 @@ class Details extends Component {
 
                             <div className="restaurant-categories-container">
                                 <div className="restaurant-categories">
-                                    {this.props.categories}
+                                    {this.props.location.categories}
                                 </div>
                             </div>
                             <div className="count-container">
